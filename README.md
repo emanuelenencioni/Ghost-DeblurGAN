@@ -30,6 +30,13 @@ Link to the YorkTag dataset utilized in our paper: https://drive.google.com/file
  
 <img src="https://user-images.githubusercontent.com/58899542/132930869-a66fb452-9579-4922-980a-94bc5e067ae9.jpeg" width="900">
 
+# How to run it
+I personally tested (ONLY for inference pipeline (predict.py)) with python 3.9 and the new requirements.
+```bash
+conda create -n GDGAN python=3.9 pip -y
+conda activate GDGAN
+sh install_req.sh
+```
 
 # Training
 ## Command
