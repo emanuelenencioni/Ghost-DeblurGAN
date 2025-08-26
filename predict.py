@@ -16,11 +16,23 @@ from models.networks import get_generator
 class Predictor:
     def __init__(self, weights_path: str, model_name: str = '', cuda: bool = True):
         with open('config/config.yaml') as cfg:
-            config = yaml.load(cfg)
+            config = yaml.safe_load(cfg)
         model = get_generator(model_name or config['model'], cuda= cuda)
-        model.load_state_dict(torch.load(weights_path)['model']) if weights_path is not None else None
-        self.model = model.module.cpu() if not cuda else model.cuda()
+        weights = torch.load(weights_path) if weights_path is not None else None
+        if not cuda:  # remove module.
+            if list(weights["model"].keys())[0].startswith('module.'):
+                from collections import OrderedDict
+                new_state_dict = OrderedDict()
+                for k, v in weights["model"].items():
+                    if k.startswith('module.'):
+                        name = k[7:]  # remove `module.`
+                        new_state_dict[name] = v
+                weights["model"] = new_state_dict
+        model.load_state_dict(weights["model"]) if weights_path is not None else None
+        self.model = model.cpu() if not cuda else model.cuda()
         self.cuda= cuda
+        
+            
         self.model.train(True)
         # GAN inference should be in train mode to use actual stats in norm layers,
         # it's not a bug
@@ -91,7 +103,7 @@ def process_video(pairs, predictor, output_dir):
 
 def main(img_pattern: str,
          mask_pattern: Optional[str] = None,
-         weights_path='best_fpn.h5',
+         weights_path='trained_weights/fpn_ghostnet_gm_hin.h5',
          out_dir='submit/',
          side_by_side: bool = False,
          video: bool = False, cuda: bool= True):
